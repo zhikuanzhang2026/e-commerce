@@ -340,9 +340,12 @@
 				<div class="space-y-0">
 					<!-- Description -->
 					<div class="py-4">
-						<p class="text-sm font-sans text-primary/80 dark:text-white/80 leading-relaxed">
-							{product.description}
-						</p>
+						<div
+							class="prose prose-sm dark:prose-invert max-w-none text-primary/80 dark:text-white/80 leading-relaxed"
+						>
+							<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+							{@html product.description}
+						</div>
 					</div>
 
 					<!-- Material -->
