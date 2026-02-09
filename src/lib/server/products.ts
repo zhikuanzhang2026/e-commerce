@@ -59,9 +59,7 @@ async function fetchStripePrice(stripeId?: string): Promise<{ formatted: string;
 						`⚠️ Stripe price lookup failed for ${stripeId}: ${message}. Using fallback.`
 					);
 				}
-				// Return a safe default to prevent crashing, or 0 if truly invalid
-				// Ideally, we'd fetch the price from PocketBase 'display_price' as fallback,
-				// but here we are in a pure Stripe enrichment context.
+				// Return a safe default to prevent crashing, or 0 if truly invalid.
 				return { formatted: 'N/A', value: 0 };
 			}
 		} else if (stripeId.startsWith('prod_')) {
@@ -110,9 +108,7 @@ async function enrichProductWithStripe(product: Product): Promise<Product> {
 		if (value > 0) {
 			return { ...product, price: formatted, priceValue: value };
 		}
-		// If Stripe fetch failed (value 0/fallback), keep the PB display_price if available
-		// Note: product.priceValue from mapRecordToProduct uses 'display_price' from PB
-		// So we just return the product as is.
+		// If Stripe fetch failed (value 0/fallback), keep the existing product as-is.
 	}
 	return product;
 }
@@ -323,7 +319,7 @@ export async function getProducts(options?: ProductFilterOptions): Promise<Produ
 
 		const records = await pb.collection(Collections.Products).getFullList({
 			filter: filter,
-			expand: 'category'
+			expand: 'category,product_variants(product)'
 		});
 
 		const basicProducts = records.map((r) => {
@@ -414,7 +410,7 @@ export async function getProductsByCategory(categorySlug: string): Promise<Produ
 
 		const records = await pb.collection(Collections.Products).getFullList({
 			filter: `category.id ?~ "${category.id}"`,
-			expand: 'category'
+			expand: 'category,product_variants(product)'
 		});
 
 		const basicProducts = records.map((r) => {
@@ -430,11 +426,14 @@ export async function getProductsByCategory(categorySlug: string): Promise<Produ
 export async function getFeaturedProducts(): Promise<Product[]> {
 	return withAdmin(async (pb) => {
 		const records = await pb.collection(Collections.Products).getFullList({
-			filter: 'is_featured=true'
+			filter: 'is_featured=true',
+			expand: 'category,product_variants(product)'
 		});
 
 		if (records.length === 0) {
-			const fallbackRecords = await pb.collection(Collections.Products).getList(1, 6);
+			const fallbackRecords = await pb.collection(Collections.Products).getList(1, 6, {
+				expand: 'category,product_variants(product)'
+			});
 			const basicProducts = fallbackRecords.items.map((r) => mapRecordToProduct(r));
 			return enrichProductsBulk(basicProducts);
 		}
@@ -446,7 +445,9 @@ export async function getFeaturedProducts(): Promise<Product[]> {
 
 export async function getRelatedProducts(currentId: string, limit = 4): Promise<Product[]> {
 	return withAdmin(async (pb) => {
-		const records = await pb.collection(Collections.Products).getList(1, limit + 1);
+		const records = await pb.collection(Collections.Products).getList(1, limit + 1, {
+			expand: 'category,product_variants(product)'
+		});
 
 		const filtered = records.items.filter((r) => r.slug !== currentId).slice(0, limit);
 

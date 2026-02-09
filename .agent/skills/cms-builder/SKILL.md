@@ -19,7 +19,9 @@ This skill provides a complete toolset for managing the Elementhic E-commerce ba
  Used for backend logic, inventory management, and financial reporting.
 - **`order_items`**: Atomic line items derived from orders. Used for sales reports, returns, and refunds.
 - **`product_variants`**: SKU-level tracking for inventory (`stock_quantity`) and specific pricing (`price_override`).
-  `color` is the display label; `color_swatch` is the swatch color value for the frontend.
+  `color` is the display label; `color_swatch` is the swatch color value; `main_image`/`gallery_images` are variant media.
+
+**Media rule**: For the same `product` + `color`, images SHOULD be stored once and reused across sizes.
 - **`user_addresses`**: Customer address book with labels.
 
 ### Tier 3: Flexible Extension (Agility)
@@ -34,7 +36,7 @@ This skill provides a complete toolset for managing the Elementhic E-commerce ba
 ### `products`
 The central catalog entity.
 - `title`, `slug`, `price` (Legacy display string), `is_featured` (bool)
-- `has_variants` (bool): UI flag. If true, frontend requires variant selection.
+- Variants are inferred from reverse relation `product_variants(product)`.
 - `attributes` (json): Structured specs (Material, Care, Fit).
 - **Relations**: `category`, `product_variants(product)` (Reverse relation).
 
@@ -64,7 +66,7 @@ Low-level schema migration tool.
 4. **Hybrid Driver Sync (Stripe ↔ PB)**
    - **Trigger**: Creating/Updating/Deleting products in Stripe Dashboard.
    - **Auto-Mirroring**: `product.created` in Stripe automatically creates a stub in PB and links IDs.
-   - **Sync Rule**: Stripe governs `active` status (synced to PB `stock_status`). PB governs rich descriptions/galleries.
+   - **Sync Rule**: Stripe governs `active` status. PB governs rich descriptions/galleries.
    - **Metadata**: Stripe product `metadata.pb_product_id` is the single source of truth for linking.
 
 ---
@@ -72,7 +74,7 @@ Low-level schema migration tool.
 ## 5. Operational Rules (CRITICAL)
 
 1. **Snapshot Rule**: precise historical data is stored in `orders.items`. Never rely on `products` table for historical order details as product prices/titles change over time.
-2. **Stock Logic**: Always deduct stock from `product_variants` if `variant_id` is present. Fallback to `products` only for simple items.
+2. **Stock Logic**: Always deduct stock from `product_variants`. If `variant_id` is missing, the product MUST have exactly one variant.
 3. **Workflow Rule**: Create products in **Stripe first** for automatic mirroring, then enhance/decorate in **PocketBase**.
 4. **Media**: Use `ui_sections.image` for one-off headers. Use `media_library` (conceptual) or shared URL references for reusable assets.
 
@@ -84,7 +86,7 @@ Low-level schema migration tool.
 
 ### 库存扣减 - `POST /api/inventory/deduct`
 - **用途**: 批量原子扣减库存
-- **特性**: 检查库存充足后才扣减，自动更新 `stock_status`
+- **特性**: 检查库存充足后才扣减，自动更新 `product_variants.stock_status`
 - **认证**: `X-Webhook-Secret` 请求头
 
 ### 优惠券递增 - `POST /api/coupons/increment`
@@ -96,7 +98,7 @@ Low-level schema migration tool.
 
 ## 7. n8n Workflow Integration
 
-订单处理由 n8n 工作流编排，文件：`Elementhic Stripe Order.json`
+订单处理由 n8n 工作流编排（工作流名：`Elementhic Stripe Order`）。
 
 ### 流程
 ```

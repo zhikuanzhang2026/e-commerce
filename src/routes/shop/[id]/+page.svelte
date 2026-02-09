@@ -20,6 +20,15 @@
 	let selectedColor = $state('');
 	let currentImageIndex = $state(0);
 
+	const DEFAULT_SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', 'O/S'] as const;
+	function getSizeRank(sizeLabel: string) {
+		const normalized = String(sizeLabel || '')
+			.trim()
+			.toUpperCase();
+		const idx = DEFAULT_SIZE_ORDER.indexOf(normalized as (typeof DEFAULT_SIZE_ORDER)[number]);
+		return idx === -1 ? Number.POSITIVE_INFINITY : idx;
+	}
+
 	// UI States
 	let isAdding = $state(false);
 	let sizeError = $state(false);
@@ -52,7 +61,21 @@
 			.map((v) => ({
 				size: v.size,
 				stock: v.stockQuantity
-			}));
+			}))
+			.sort((a, b) => {
+				const aRank = getSizeRank(a.size);
+				const bRank = getSizeRank(b.size);
+				if (aRank !== bRank) return aRank - bRank;
+
+				const aNum = Number(a.size);
+				const bNum = Number(b.size);
+				const aNumOk = Number.isFinite(aNum);
+				const bNumOk = Number.isFinite(bNum);
+				if (aNumOk && bNumOk && aNum !== bNum) return aNum - bNum;
+				if (aNumOk !== bNumOk) return aNumOk ? -1 : 1;
+
+				return String(a.size).localeCompare(String(b.size));
+			});
 	});
 
 	// Reset state when product changes
@@ -66,7 +89,7 @@
 	});
 
 	// Dynamic Image Gallery Logic
-	// If a variant is selected and has a specific image, promote that image to the front.
+	// Variant galleries live on `product_variants.gallery_images`.
 	let sortedImages = $derived.by(() => {
 		const defaultImages = product.images || [];
 
@@ -77,12 +100,18 @@
 			(v) => v.color === selectedColor && (selectedSize ? v.size === selectedSize : true)
 		);
 
+		const variantGallery = variant?.galleryImages?.filter(Boolean) ?? [];
 		const variantImage = variant?.image;
 
+		if (variantGallery.length > 0) {
+			// Ensure a dedicated variant image (if any) is included.
+			if (variantImage && !variantGallery.includes(variantImage)) {
+				return [variantImage, ...variantGallery];
+			}
+			return variantGallery;
+		}
+
 		if (variantImage) {
-			// Check if this image is already in the main gallery to avoid duplicates visually if desired.
-			// But for variants, it's often a unique image. Let's prepend it.
-			// Filter out the variant image from default images if it exists there to act as a "move to front"
 			const otherImages = defaultImages.filter((img) => img !== variantImage);
 			return [variantImage, ...otherImages];
 		}

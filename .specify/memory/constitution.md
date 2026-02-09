@@ -1,25 +1,20 @@
 <!--
 SYNC IMPACT REPORT
-Version: 1.5.1 -> 1.5.2
+Version: 1.5.2 -> 1.5.3
 List of modified principles:
-- II. Apple UX Style & Aesthetics: Updated font examples to match `src/app.css` tokens.
-- VIII. Spec-Driven Workflow (The Law): Clarified canonical `specs/<feature>/` traceability paths.
+- V. Backend & Architecture (Adaptive Edge): Clarified documentation secret hygiene and workflow reference policy.
 Added sections:
 None
 Removed sections:
 None
 Templates requiring updates:
-- .specify/templates/plan-template.md (✅ updated)
+- .specify/templates/plan-template.md (✅ verified)
 - .specify/templates/spec-template.md (✅ verified)
 - .specify/templates/tasks-template.md (✅ verified)
 Command files requiring updates:
 - .opencode/command/*.md (✅ verified)
 Runtime docs requiring updates:
-- README.md (✅ updated)
-- .github/pull_request_template.md (✅ updated)
-- .specify/CODE_REVIEW_GUIDE.md (✅ updated)
-Spec artifacts requiring updates:
-- .specify/specs/* -> specs/* (✅ moved + links corrected)
+- .agent/docs/atomic-api-guide.md (✅ updated)
 Automation/scripts requiring updates:
 None
 Follow-up TODOs:
@@ -95,6 +90,10 @@ None
 - **Secret Transport (SHOULD)**: Shared secrets SHOULD be passed via headers, not query parameters.
 - **Workflow Secrets (MUST)**: Secrets MUST NOT be hard-coded in code, docs, or tracked workflow
   exports. Use `$env` (server) or n8n credentials/environment variables.
+- **Documentation Secret Hygiene (MUST)**: Documentation examples MUST use placeholder secret values
+  (for example `<WEBHOOK_SECRET>`), never real keys or tokens.
+- **Workflow Reference Policy (SHOULD)**: Runtime docs SHOULD refer to n8n workflow names/IDs in the
+  instance rather than assuming local tracked JSON export filenames.
 - **Workflow Export Hygiene (MUST)**: Workflow JSON committed to the repo MUST be sanitized (no
   `pinData`, sample payloads with PII, API keys, or webhook secrets). If not sanitized, keep it
   untracked.
@@ -145,4 +144,4 @@ None
     - PRs MUST NOT include secrets or workflow exports containing secrets/PII/pinData.
     - Reviewers MUST reject PRs violating MUST-level rules, regardless of functional correctness.
 
-**Version**: 1.5.2 | **Ratified**: 2026-01-27 | **Last Amended**: 2026-02-05
+**Version**: 1.5.3 | **Ratified**: 2026-01-27 | **Last Amended**: 2026-02-09

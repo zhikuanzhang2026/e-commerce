@@ -133,6 +133,7 @@ export const POST: RequestHandler = apiHandler(async ({ request }) => {
 			title: string;
 			price: number; // cents
 			quantity: number;
+			skuSnap?: string;
 			color: string;
 			size: string;
 			image: string;
@@ -231,6 +232,7 @@ export const POST: RequestHandler = apiHandler(async ({ request }) => {
 				title: product.title,
 				price: priceCents,
 				quantity,
+				skuSnap: variant?.sku,
 				color,
 				size,
 				image

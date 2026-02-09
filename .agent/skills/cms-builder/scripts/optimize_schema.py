@@ -349,19 +349,98 @@ def main() -> int:
     variants_fields, size_req_changed = _set_field_required(
         variants_fields, "size", True
     )
+
+    variants_fields, swatch_added = _ensure_field(
+        variants_fields,
+        {
+            "name": "color_swatch",
+            "type": "text",
+            "required": False,
+            "presentable": False,
+            "hidden": False,
+            "min": 0,
+            "max": 0,
+            "pattern": "",
+            "system": False,
+        },
+    )
+
+    variants_fields, v_stock_status_added = _ensure_field(
+        variants_fields,
+        {
+            "name": "stock_status",
+            "type": "select",
+            "required": False,
+            "presentable": False,
+            "hidden": False,
+            "maxSelect": 1,
+            "values": ["in_stock", "low_stock", "out_of_stock"],
+            "system": False,
+        },
+    )
+    variants_fields, v_gallery_added = _ensure_field(
+        variants_fields,
+        {
+            "name": "gallery_images",
+            "type": "file",
+            "required": False,
+            "presentable": False,
+            "hidden": False,
+            "protected": False,
+            "maxSelect": 10,
+            "maxSize": 5242880,
+            "mimeTypes": [
+                "image/jpeg",
+                "image/png",
+                "image/webp",
+                "image/gif",
+            ],
+            "thumbs": ["100x100"],
+            "system": False,
+        },
+    )
+
+    variants_fields, v_main_image_added = _ensure_field(
+        variants_fields,
+        {
+            "name": "main_image",
+            "type": "file",
+            "required": False,
+            "presentable": False,
+            "hidden": False,
+            "protected": False,
+            "maxSelect": 1,
+            "maxSize": 5242880,
+            "mimeTypes": [
+                "image/jpeg",
+                "image/png",
+                "image/webp",
+                "image/gif",
+            ],
+            "thumbs": ["100x100"],
+            "system": False,
+        },
+    )
     variants_indexes = list(variants.get("indexes") or [])
-    variants_indexes, sku_idx_changed = _ensure_index(
+    variants_indexes, sku_unique_idx_changed = _ensure_index(
         variants_indexes,
-        "CREATE INDEX `idx_product_variants_sku` ON `product_variants` (`sku`)",
+        "CREATE UNIQUE INDEX `uidx_product_variants_sku` ON `product_variants` (`sku`) WHERE `sku` != ''",
     )
     variants_indexes, uniq_idx_changed = _ensure_index(
         variants_indexes,
         "CREATE UNIQUE INDEX `idx_product_variants_product_color_size` ON `product_variants` (`product`, `color`, `size`)",
     )
     variants_payload: Dict[str, Any] = {}
-    if color_req_changed or size_req_changed:
+    if (
+        color_req_changed
+        or size_req_changed
+        or swatch_added
+        or v_stock_status_added
+        or v_gallery_added
+        or v_main_image_added
+    ):
         variants_payload["fields"] = variants_fields
-    if sku_idx_changed or uniq_idx_changed:
+    if sku_unique_idx_changed or uniq_idx_changed:
         variants_payload["indexes"] = variants_indexes
     maybe_patch("product_variants", variants_payload)
 

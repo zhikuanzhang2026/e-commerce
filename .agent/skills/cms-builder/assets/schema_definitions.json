@@ -1157,20 +1157,6 @@
 				"type": "text"
 			},
 			{
-				"hidden": false,
-				"id": "file1117541064",
-				"maxSelect": 10,
-				"maxSize": 5242880,
-				"mimeTypes": ["image/jpeg", "image/png", "image/webp", "image/gif"],
-				"name": "gallery_images",
-				"presentable": false,
-				"protected": false,
-				"required": false,
-				"system": false,
-				"thumbs": ["100x100"],
-				"type": "file"
-			},
-			{
 				"convertURLs": false,
 				"hidden": false,
 				"id": "editor1843675174",
@@ -1180,18 +1166,6 @@
 				"required": false,
 				"system": false,
 				"type": "editor"
-			},
-			{
-				"hidden": false,
-				"id": "number3415750962",
-				"max": null,
-				"min": null,
-				"name": "display_price",
-				"onlyInt": false,
-				"presentable": false,
-				"required": false,
-				"system": false,
-				"type": "number"
 			},
 			{
 				"autogeneratePattern": "",
@@ -1222,29 +1196,6 @@
 				"type": "text"
 			},
 			{
-				"hidden": false,
-				"id": "select2972104586",
-				"maxSelect": 0,
-				"name": "stock_status",
-				"presentable": false,
-				"required": false,
-				"system": false,
-				"type": "select",
-				"values": ["in_stock", "low_stock", "out_of_stock"]
-			},
-			{
-				"hidden": false,
-				"id": "number3493151348",
-				"max": null,
-				"min": 0,
-				"name": "stock_quantity",
-				"onlyInt": false,
-				"presentable": false,
-				"required": false,
-				"system": false,
-				"type": "number"
-			},
-			{
 				"cascadeDelete": false,
 				"collectionId": "pbc_3292755704",
 				"hidden": false,
@@ -1261,15 +1212,6 @@
 				"hidden": false,
 				"id": "bool2847551440",
 				"name": "is_featured",
-				"presentable": false,
-				"required": false,
-				"system": false,
-				"type": "bool"
-			},
-			{
-				"hidden": false,
-				"id": "bool773218999",
-				"name": "has_variants",
 				"presentable": false,
 				"required": false,
 				"system": false,
@@ -2193,6 +2135,34 @@
 				"type": "relation"
 			},
 			{
+				"hidden": false,
+				"id": "file1097224036",
+				"maxSelect": 1,
+				"maxSize": 5242880,
+				"mimeTypes": ["image/jpeg", "image/png", "image/webp", "image/gif"],
+				"name": "main_image",
+				"presentable": false,
+				"protected": false,
+				"required": false,
+				"system": false,
+				"thumbs": ["100x100"],
+				"type": "file"
+			},
+			{
+				"hidden": false,
+				"id": "file8478839466",
+				"maxSelect": 10,
+				"maxSize": 5242880,
+				"mimeTypes": ["image/jpeg", "image/png", "image/webp", "image/gif"],
+				"name": "gallery_images",
+				"presentable": false,
+				"protected": false,
+				"required": false,
+				"system": false,
+				"thumbs": ["100x100"],
+				"type": "file"
+			},
+			{
 				"autogeneratePattern": "",
 				"hidden": false,
 				"id": "text261109956",
@@ -2223,6 +2193,20 @@
 			{
 				"autogeneratePattern": "",
 				"hidden": false,
+				"id": "text5544731167",
+				"max": 0,
+				"min": 0,
+				"name": "color_swatch",
+				"pattern": "",
+				"presentable": false,
+				"primaryKey": false,
+				"required": false,
+				"system": false,
+				"type": "text"
+			},
+			{
+				"autogeneratePattern": "",
+				"hidden": false,
 				"id": "text4156564586",
 				"max": 0,
 				"min": 0,
@@ -2233,18 +2217,6 @@
 				"required": true,
 				"system": false,
 				"type": "text"
-			},
-			{
-				"hidden": false,
-				"id": "number3769974258",
-				"max": null,
-				"min": null,
-				"name": "price_override",
-				"onlyInt": false,
-				"presentable": false,
-				"required": false,
-				"system": false,
-				"type": "number"
 			},
 			{
 				"hidden": false,
@@ -2260,17 +2232,14 @@
 			},
 			{
 				"hidden": false,
-				"id": "file1169660674",
+				"id": "select5610774976",
 				"maxSelect": 1,
-				"maxSize": 0,
-				"mimeTypes": null,
-				"name": "variant_image",
+				"name": "stock_status",
 				"presentable": false,
-				"protected": false,
 				"required": false,
 				"system": false,
-				"thumbs": null,
-				"type": "file"
+				"type": "select",
+				"values": ["in_stock", "low_stock", "out_of_stock"]
 			},
 			{
 				"autogeneratePattern": "[a-z0-9]{15}",
@@ -2287,24 +2256,22 @@
 				"type": "text"
 			},
 			{
-				"autogeneratePattern": "",
 				"hidden": false,
-				"id": "text5544731167",
-				"max": 0,
-				"min": 0,
-				"name": "color_swatch",
-				"pattern": "",
+				"id": "number3769974258",
+				"max": null,
+				"min": null,
+				"name": "price_override",
+				"onlyInt": false,
 				"presentable": false,
-				"primaryKey": false,
 				"required": false,
 				"system": false,
-				"type": "text"
+				"type": "number"
 			}
 		],
 		"indexes": [
 			"CREATE INDEX `idx_product_variants_product` ON `product_variants` (`product`)",
-			"CREATE INDEX `idx_product_variants_sku` ON `product_variants` (`sku`)",
-			"CREATE UNIQUE INDEX `idx_product_variants_product_color_size` ON `product_variants` (`product`, `color`, `size`)"
+			"CREATE UNIQUE INDEX `idx_product_variants_product_color_size` ON `product_variants` (`product`, `color`, `size`)",
+			"CREATE UNIQUE INDEX `uidx_product_variants_sku` ON `product_variants` (`sku`) WHERE `sku` != ''"
 		],
 		"listRule": "",
 		"viewRule": "",

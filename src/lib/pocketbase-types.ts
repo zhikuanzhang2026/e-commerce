@@ -227,16 +227,18 @@ export type PagesRecord = {
 export type ProductVariantsRecord = {
 	color: string;
 	color_swatch?: string;
+	gallery_images?: FileNameString[];
 	id: string;
+	main_image?: FileNameString;
 	price_override?: number;
 	product: RecordIdString;
 	size: string;
 	sku: string;
+	stock_status?: ProductVariantsStockStatusOptions;
 	stock_quantity: number;
-	variant_image?: FileNameString;
 };
 
-export enum ProductsStockStatusOptions {
+export enum ProductVariantsStockStatusOptions {
 	'in_stock' = 'in_stock',
 	'low_stock' = 'low_stock',
 	'out_of_stock' = 'out_of_stock'
@@ -245,15 +247,10 @@ export type ProductsRecord<Tattributes = unknown> = {
 	attributes?: null | Tattributes;
 	category?: RecordIdString[];
 	description?: HTMLString;
-	display_price?: number;
-	gallery_images?: FileNameString[];
-	has_variants?: boolean;
 	id: string;
 	is_featured?: boolean;
 	main_image?: FileNameString;
 	slug: string;
-	stock_quantity?: number;
-	stock_status?: ProductsStockStatusOptions;
 	stripe_price_id?: string;
 	stripe_product_id?: string;
 	title: string;

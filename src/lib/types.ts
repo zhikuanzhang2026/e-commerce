@@ -46,6 +46,8 @@ export const ProductVariantSchema = z.object({
 	colorSwatch: z.string().optional(),
 	size: z.string(),
 	sku: z.string(),
+	stockStatus: z.enum(['in_stock', 'low_stock', 'out_of_stock']).optional(),
+	galleryImages: z.array(z.string()).optional(),
 
 	// Mapped
 	image: z.string().optional(),

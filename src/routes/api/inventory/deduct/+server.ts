@@ -13,7 +13,7 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { createAdminClient } from '$lib/server/pocketbase';
 import { env as privateEnv } from '$env/dynamic/private';
-import { Collections, ProductsStockStatusOptions } from '$lib/pocketbase-types';
+import { Collections } from '$lib/pocketbase-types';
 
 // Expected secret from n8n (same as WEBHOOK_SECRET in n8n workflow)
 const WEBHOOK_SECRET = privateEnv.N8N_WEBHOOK_SECRET || 'n8n-elementhic-webhook-2026';
@@ -39,10 +39,10 @@ interface DeductResult {
 	skipped?: boolean;
 }
 
-function computeStockStatus(stock: number): ProductsStockStatusOptions {
-	if (stock <= 0) return ProductsStockStatusOptions.out_of_stock;
-	if (stock <= 5) return ProductsStockStatusOptions.low_stock;
-	return ProductsStockStatusOptions.in_stock;
+function computeStockStatus(stock: number): 'in_stock' | 'low_stock' | 'out_of_stock' {
+	if (stock <= 0) return 'out_of_stock';
+	if (stock <= 5) return 'low_stock';
+	return 'in_stock';
 }
 
 export const POST: RequestHandler = async ({ request }) => {
@@ -109,37 +109,40 @@ export const POST: RequestHandler = async ({ request }) => {
 				// We re-check stock in the update to prevent race conditions
 				const newStock = currentStock - quantity;
 				await pb.collection(Collections.ProductVariants).update(variantId, {
-					stock_quantity: newStock
+					stock_quantity: newStock,
+					stock_status: computeStockStatus(newStock)
 				});
 
 				result.newStock = newStock;
 				result.success = true;
-
-				// Step 4: Update parent product's aggregated stock
-				try {
-					const allVariants = await pb.collection(Collections.ProductVariants).getFullList({
-						filter: `product="${productId}"`
-					});
-					const totalStock = allVariants.reduce(
-						(sum, v) => sum + (Number(v.stock_quantity) || 0),
-						0
-					);
-					await pb.collection(Collections.Products).update(productId, {
-						stock_quantity: totalStock,
-						stock_status: computeStockStatus(totalStock)
-					});
-				} catch (aggErr) {
-					// Non-fatal: variant deduction succeeded, but aggregation failed
-					console.warn('⚠️ Failed to update product aggregated stock:', aggErr);
-				}
 			} else {
-				// --- SIMPLE PRODUCT STOCK DEDUCTION ---
-				// Step 1: Get current product stock
-				const product = await pb.collection(Collections.Products).getOne(productId);
-				const currentStock = Number(product.stock_quantity) || 0;
+				// --- NO VARIANT ID PROVIDED ---
+				// With the new schema, inventory lives on `product_variants`.
+				// We only allow missing variantId when the product has exactly one variant.
+				const variants = await pb.collection(Collections.ProductVariants).getFullList({
+					filter: `product="${productId}"`
+				});
+
+				if (variants.length === 0) {
+					result.error = 'No variants found for product; variantId is required';
+					allSuccess = false;
+					results.push(result);
+					continue;
+				}
+
+				if (variants.length > 1) {
+					result.error = 'Multiple variants found; variantId is required';
+					allSuccess = false;
+					results.push(result);
+					continue;
+				}
+
+				const v = variants[0];
+				const resolvedVariantId = v.id;
+				const currentStock = Number(v.stock_quantity) || 0;
+				result.variantId = resolvedVariantId;
 				result.previousStock = currentStock;
 
-				// Step 2: Check if sufficient stock
 				if (currentStock < quantity) {
 					result.error = `Insufficient stock: have ${currentStock}, need ${quantity}`;
 					allSuccess = false;
@@ -147,9 +150,8 @@ export const POST: RequestHandler = async ({ request }) => {
 					continue;
 				}
 
-				// Step 3: Atomic update
 				const newStock = currentStock - quantity;
-				await pb.collection(Collections.Products).update(productId, {
+				await pb.collection(Collections.ProductVariants).update(resolvedVariantId, {
 					stock_quantity: newStock,
 					stock_status: computeStockStatus(newStock)
 				});

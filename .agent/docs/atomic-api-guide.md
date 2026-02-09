@@ -34,7 +34,6 @@ Stripe Webhook
 
 ```
 e-commerce/
-├── Elementhic Stripe Order.json          # n8n 工作流 (导入用)
 ├── src/routes/api/
 │   ├── inventory/deduct/+server.ts       # 原子库存扣减 API
 │   └── coupons/increment/+server.ts      # 原子优惠券递增 API
@@ -50,7 +49,7 @@ e-commerce/
 **请求**:
 ```bash
 curl -X POST https://elementhic.com/api/inventory/deduct \
-  -H "X-Webhook-Secret: n8n-elementhic-webhook-2026" \
+  -H "X-Webhook-Secret: <WEBHOOK_SECRET>" \
   -H "Content-Type: application/json" \
   -d '{
     "orderId": "order_id",
@@ -83,7 +82,7 @@ curl -X POST https://elementhic.com/api/inventory/deduct \
 **请求**:
 ```bash
 curl -X POST https://elementhic.com/api/coupons/increment \
-  -H "X-Webhook-Secret: n8n-elementhic-webhook-2026" \
+  -H "X-Webhook-Secret: <WEBHOOK_SECRET>" \
   -H "Content-Type: application/json" \
   -d '{"couponCode": "SAVE10", "orderId": "order_id"}'
 ```
@@ -106,7 +105,7 @@ curl -X POST https://elementhic.com/api/coupons/increment \
 
 ### 导入步骤
 1. 打开 n8n
-2. Import from file → 选择 `Elementhic Stripe Order.json`
+2. 进入已上传的订单工作流（`Elementhic Stripe Order`）
 3. 修改 **⚙️ Config** 节点中的配置值
 
 ### 配置项

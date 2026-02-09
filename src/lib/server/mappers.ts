@@ -37,17 +37,80 @@ export function mapRecordToProduct(record: ProductsResponse, categories?: Catego
 
 	const mainImage = record.main_image ? getFileUrl(collectionId, recordId, record.main_image) : '';
 
-	const rawGallery = record.gallery_images || [];
-	const galleryImages = Array.isArray(rawGallery)
-		? rawGallery.map((img) => getFileUrl(collectionId, recordId, img))
-		: [];
-
 	// Map Variants from Expanded Relation
 	type ProductExpand = { 'product_variants(product)'?: ProductVariantsResponse[] };
 	const expandedVariants = (record.expand as unknown as ProductExpand | undefined)?.[
 		'product_variants(product)'
 	];
-	const variants = mapVariantsFromExpand(expandedVariants);
+	const rawVariants = mapVariantsFromExpand(expandedVariants);
+
+	// Media normalization:
+	// For the same (product,color), images are intended to be shared across sizes.
+	// Only one "media" variant needs to store the images; others can be blank.
+	const mediaByColor = new Map<
+		string,
+		{
+			image?: string;
+			galleryImages: string[];
+		}
+	>();
+	for (const v of rawVariants) {
+		const galleryImages = Array.isArray(v.galleryImages) ? v.galleryImages.filter(Boolean) : [];
+		const image = v.image || galleryImages[0] || undefined;
+		if (!image && galleryImages.length === 0) continue;
+
+		const existing = mediaByColor.get(v.color);
+		if (!existing) {
+			mediaByColor.set(v.color, { image, galleryImages });
+			continue;
+		}
+
+		const existingGalleryLen = existing.galleryImages?.length || 0;
+		if (galleryImages.length > existingGalleryLen) {
+			mediaByColor.set(v.color, { image, galleryImages });
+			continue;
+		}
+		if (!existing.image && image) {
+			mediaByColor.set(v.color, { image, galleryImages: existing.galleryImages });
+		}
+	}
+
+	const variants = rawVariants.map((v) => {
+		const media = mediaByColor.get(v.color);
+		if (!media) return v;
+
+		const hasGallery = Array.isArray(v.galleryImages) && v.galleryImages.length > 0;
+		const galleryImages = hasGallery
+			? v.galleryImages
+			: media.galleryImages.length > 0
+				? media.galleryImages
+				: v.galleryImages;
+		const image = v.image || media.image || galleryImages?.[0] || undefined;
+
+		return {
+			...v,
+			galleryImages,
+			image
+		};
+	});
+
+	const hasVariants = variants.length > 0;
+
+	// Determine base image(s). With the new schema, galleries live on variants.
+	let baseImage = mainImage;
+	if (!baseImage) {
+		const firstVariant = variants[0];
+		baseImage = firstVariant?.image || firstVariant?.galleryImages?.[0] || '';
+	}
+	const baseImages = baseImage ? [baseImage] : [];
+
+	function computeStockStatus(totalStock: number): 'in_stock' | 'low_stock' | 'out_of_stock' {
+		if (totalStock <= 0) return 'out_of_stock';
+		if (totalStock <= 5) return 'low_stock';
+		return 'in_stock';
+	}
+	const totalVariantStock = variants.reduce((sum, v) => sum + (Number(v.stockQuantity) || 0), 0);
+	const stockStatus = hasVariants ? computeStockStatus(totalVariantStock) : 'out_of_stock';
 
 	// Handle categoryIds - can be string or array
 	const rawCategoryIds = record.category;
@@ -81,10 +144,10 @@ export function mapRecordToProduct(record: ProductsResponse, categories?: Catego
 		// Frontend Specific / Computed
 		price: 'Loading...',
 		priceValue: 0,
-		image: mainImage,
-		images: galleryImages.length > 0 ? galleryImages : [mainImage],
+		image: baseImage,
+		images: baseImages,
 
-		variants: variants.length > 0 ? variants : undefined,
+		variants: hasVariants ? variants : undefined,
 		categories: categories,
 		categoryIds: categoryIds,
 
@@ -92,8 +155,8 @@ export function mapRecordToProduct(record: ProductsResponse, categories?: Catego
 
 		// Status Flags
 		isFeature: !!record.is_featured,
-		hasVariants: !!record.has_variants,
-		stockStatus: record.stock_status || 'in_stock',
+		hasVariants: hasVariants,
+		stockStatus: stockStatus,
 		gender: gender,
 
 		stripePriceId: record.stripe_price_id
@@ -109,22 +172,33 @@ export function mapVariantsFromExpand(
 ): ProductVariant[] {
 	if (!expandedVariants) return [];
 
-	return expandedVariants.map((v) => ({
-		id: v.id,
-		collectionId: v.collectionId,
-		collectionName: v.collectionName,
+	return expandedVariants.map((v) => {
+		const galleryImages: string[] = Array.isArray(v.gallery_images)
+			? v.gallery_images.map((img) => getFileUrl(v.collectionId, v.id, img))
+			: [];
+		const image = v.main_image
+			? getFileUrl(v.collectionId, v.id, v.main_image)
+			: galleryImages[0] || undefined;
 
-		product: v.product,
-		color: v.color,
-		colorSwatch: v.color_swatch || undefined,
-		size: v.size,
-		sku: v.sku,
+		return {
+			id: v.id,
+			collectionId: v.collectionId,
+			collectionName: v.collectionName,
 
-		// Mapped
-		image: v.variant_image ? getFileUrl(v.collectionId, v.id, v.variant_image) : undefined,
-		stockQuantity: v.stock_quantity,
-		priceOverride: v.price_override
-	}));
+			product: v.product,
+			color: v.color,
+			colorSwatch: v.color_swatch || undefined,
+			size: v.size,
+			sku: v.sku,
+			galleryImages,
+			stockStatus: v.stock_status || undefined,
+
+			// Mapped
+			image,
+			stockQuantity: v.stock_quantity,
+			priceOverride: v.price_override
+		};
+	});
 }
 
 // =============================================================================

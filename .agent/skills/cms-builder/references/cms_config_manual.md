@@ -63,7 +63,7 @@
 
 ### 1. 自动镜像逻辑
 *   **创建**: 在 Stripe Dashboard 创建新商品后，系统会通过 Webhook 自动在 PB 创建一个同名记录，并自动相互关联 ID。
-*   **同步**: Stripe 中的 `Active/Archived` 状态会自动同步到 PB 的 `stock_status`。
+*   **同步**: Stripe 中的 `Active/Archived` 状态会影响 PB 的可售状态（当前由 `product_variants.stock_status` 驱动）。
 *   **删除**: Stripe 中删除商品后，PB 记录将自动标记为 `out_of_stock` 以保持数据完整性。
 
 ### 2. ID 绑定规则
@@ -245,12 +245,12 @@ maintenance_mode: false
 | `category` | Relation | ✅ | → `ready-to-wear` | 所属分类 |
 | `stripe_price_id` | Text | ✅ | `price_1ABC...` | Stripe Price ID (基础价格) |
 | `main_image` | File | ✅ | (上传图片) | 商品主图 |
-| `gallery_images` | File | ❌ | (上传多张图片) | 商品画廊 |
+| `gallery_images` | (Moved) | - | - | 已迁移到 `product_variants.gallery_images` |
 | `description` | Editor | ❌ | (富文本) | 商品描述 |
 | `attributes` | JSON | ❌ | `{"material": "Cotton"}` | 商品属性 (材质、版型等) |
 | `is_featured` | Bool | ❌ | `true` | 是否在首页推荐 |
-| `has_variants` | Bool | ❌ | `true` | 是否有变体 (控制前端 UI) |
-| `stock_status` | Select | ❌ | `in_stock` | 库存状态 (根据变体自动汇总) |
+| `has_variants` | (Removed) | - | - | 由是否存在 `product_variants` 自动推导 |
+| `stock_status` | (Moved) | - | - | 已迁移到 `product_variants.stock_status` |
 
 ---
 
@@ -259,17 +259,25 @@ maintenance_mode: false
 **集合名称:** `product_variants`  
 **用途:** 存储具体规格的 SKU、价格和库存（强关联模式）。
 
+> ✅ **媒体去重规则（强烈建议）**
+> - 同一商品同一颜色的图片通常不随尺码变化。
+> - 只在该颜色组的 **一个** 规格记录上上传 `main_image`/`gallery_images`（推荐最小尺码）。
+> - 其他尺码记录保持媒体字段为空，前端会自动回退到同色媒体。
+
 #### 字段说明
 
 | 字段名 | 类型 | 必填 | 说明 |
 |:---|:---|:---|:---|
 | `product` | Relation | ✅ | 关联的主商品 |
-| `sku` | Text | ✅ | **唯一 SKU 编码** |
+| `sku` | Text | ✅ | 变体唯一 SKU（建议：`<STYLE>-<COLOR>-<SIZE>`，用于订单/发货/对账） |
 | `color` | Text | ✅ | 颜色标签（前端展示名，如 Midnight Navy） |
 | `color_swatch` | Text | ❌ | 色块颜色（Hex/CSS，例如 #111111） |
 | `size` | Text | ✅ | 尺寸 (如 M, L, XL) |
 | `price_override` | Number | ❌ | **规格特价** (若留空则使用商品基础价格) |
+| `stock_status` | Select | ❌ | `in_stock` | 库存状态 (由 `stock_quantity` 推导，可脚本校准) |
 | `stock_quantity` | Number | ✅ | **当前库存** (Source of Truth) |
+| `main_image` | File | ❌ | 规格主图（可选，用于该规格的首图/封面） |
+| `gallery_images` | File | ❌ | 规格画廊（多图，用于商品详情轮播） |
 
 ---
 
