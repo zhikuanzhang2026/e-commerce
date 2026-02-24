@@ -22,7 +22,7 @@ The current implementation is a modern, high-performance e-commerce platform bui
 - Product price source is unified at `products` level via Stripe mapping (`stripe_price_id`).
 - Variant-level price override is removed (`product_variants.price_override` no longer exists).
 - Variant stock state is computed from `stock_quantity` at runtime (`stock_status` is not persisted).
-- Variant media fields remain enabled (`main_image`, `gallery_images`) for color-level image reuse.
+- Variant media field remains enabled (`gallery_images`) for color-level image reuse.
 
 ## Constitution Check
 

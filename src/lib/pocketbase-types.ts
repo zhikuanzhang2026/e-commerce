@@ -229,7 +229,6 @@ export type ProductVariantsRecord = {
 	color_swatch?: string;
 	gallery_images?: FileNameString[];
 	id: string;
-	main_image?: FileNameString;
 	product: RecordIdString;
 	size: string;
 	sku: string;

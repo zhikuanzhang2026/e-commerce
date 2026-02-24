@@ -53,7 +53,7 @@ As a shopper, I can save items to a wishlist for later consideration.
 
 ### Key Entities
 - **Product**: ID, Title, Description, Slug, Category, `stripe_product_id`, `stripe_price_id`, `main_image`, `attributes`, and computed display price.
-- **ProductVariant**: `sku`, `color`, `color_swatch`, `size`, `stock_quantity`, `main_image`, `gallery_images` (stock status is computed runtime).
+- **ProductVariant**: `sku`, `color`, `color_swatch`, `size`, `stock_quantity`, `gallery_images` (stock status is computed runtime).
 - **Category**: Title, Slug, Parent Relationship.
 - **User**: Email, Name, Auth tokens (managed by PocketBase).
 

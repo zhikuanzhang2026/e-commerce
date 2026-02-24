@@ -69,10 +69,10 @@ ELEMENTHIC 是一个基于 **SvelteKit 2 + Svelte 5** 构建的现代化高性�
 ## 🧱 数据模型约定（当前）
 
 - `products`：承载商品主信息与 Stripe 映射（`stripe_product_id` / `stripe_price_id`），并作为统一价格来源。
-- `product_variants`：承载规格与库存（`sku`、`color`、`size`、`stock_quantity`）及规格媒体（`main_image` / `gallery_images` / `color_swatch`）。
+- `product_variants`：承载规格与库存（`sku`、`color`、`size`、`stock_quantity`）及规格媒体（`gallery_images` / `color_swatch`）。
 - `price_override` 不再使用（已移除），变体不再参与独立定价。
 - `stock_status` 不再落库，运行时由 `stock_quantity` 动态计算。
-- 规格媒体按颜色复用：`main_image` / `gallery_images` 只需在同色一个规格记录维护，前端会同色回退。
+- 规格媒体按颜色复用：`gallery_images` 只需在同色一个规格记录维护，前端以第一张作为主图并同色回退。
 - `sku` 当前按变体唯一管理（建议格式：`<STYLE>-<COLOR>-<SIZE>`）。
 
 ---

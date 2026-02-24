@@ -172,9 +172,7 @@ export function mapVariantsFromExpand(
 		const galleryImages: string[] = Array.isArray(v.gallery_images)
 			? v.gallery_images.map((img) => getFileUrl(v.collectionId, v.id, img))
 			: [];
-		const image = v.main_image
-			? getFileUrl(v.collectionId, v.id, v.main_image)
-			: galleryImages[0] || undefined;
+		const image = galleryImages[0] || undefined;
 
 		return {
 			id: v.id,
