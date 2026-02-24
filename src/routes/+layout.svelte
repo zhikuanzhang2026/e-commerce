@@ -192,7 +192,7 @@
 			{/key}
 		</main>
 
-		<Footer navItems={data.footerNav} />
+		<Footer navItems={data.footerNav} isHome={$page.url.pathname === '/'} />
 		<Toast />
 		<CookieBanner />
 	</QueryClientProvider>

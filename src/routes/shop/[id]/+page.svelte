@@ -346,7 +346,7 @@
 								{@const isOutOfStock = typeof item === 'object' && (item.stock || 0) <= 0}
 								<button
 									class="h-10 border text-[11px] font-sans font-medium transition-all {isOutOfStock
-										? 'bg-gray-200 text-gray-500 border-gray-300 dark:bg-white/10 dark:text-white/40 dark:border-white/15 cursor-not-allowed pointer-events-none'
+										? 'bg-transparent border-black text-black opacity-30 cursor-not-allowed pointer-events-none'
 										: selectedSize === sizeLabel
 											? 'bg-primary text-white border-black dark:bg-white dark:text-primary cursor-pointer'
 											: 'border-black text-primary dark:text-white hover:bg-primary hover:text-white dark:hover:bg-white dark:hover:text-primary cursor-pointer'} {sizeError &&

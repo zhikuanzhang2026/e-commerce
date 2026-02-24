@@ -5,13 +5,14 @@
 
 	interface FooterProps {
 		navItems?: NavItem[];
+		isHome?: boolean;
 		siteSettings?: {
 			siteName: string;
 			// ... other settings if needed
 		};
 	}
 
-	let { navItems = [] }: FooterProps = $props();
+	let { navItems = [], isHome = false }: FooterProps = $props();
 	const COOKIE_SETTINGS_OPEN_EVENT = 'cookie-settings-open';
 
 	let email = $state('');
@@ -50,7 +51,7 @@
 </script>
 
 <footer
-	class="bg-white dark:bg-black text-primary dark:text-white py-13 px-6 md:px-12 flex items-center justify-center"
+	class={`bg-white dark:bg-black text-primary dark:text-white ${isHome ? 'pt-20 pb-13' : 'py-13'} px-6 md:px-12 flex items-center justify-center`}
 >
 	<div
 		class="w-full max-w-[1600px] mx-auto flex flex-col lg:flex-row justify-between items-start lg:items-end gap-16 lg:gap-0"
